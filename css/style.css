@@ -1,0 +1,42 @@
+.my-navbar-image
+{
+	height:85px;
+	width: 1349px;
+
+}
+.my-body
+{
+	 background-color: rgb(198, 242, 235);
+}
+.my-navbar-header
+{
+	height:85px;
+	width: 1280px;
+}
+.my-rules-image
+{
+	height: 180px;
+	width: 200px;
+}
+.my-button-style
+{
+	margin:2px 60px 0px;
+	width: 100px;
+}
+#my-navbar-text
+{
+	font-size: 45px;
+	text-align: center;
+	padding-left: 15px;
+	color:rgb(95, 75, 152);
+}
+.table>tbody>tr>td
+{
+	padding: 3px;
+	
+}
+.my-live-cell
+{
+	padding: 3px;
+	background-color: black;
+}

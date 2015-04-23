@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Game Of Life</title>
+		<link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="../css/style.css">
+	</head>
+	<body class="my-body" id="gameBody">
+    <script>
+      document.addEventListener("DOMContentLoaded", function(e) {
+        loadTable();
+      });
+
+    </script>
+			<!-- <nav class="navbar navbar-default">
+    			<div class="navbar-header my-navbar-header "> 
+     				 <img alt="Brand" class="my-navbar-image" src="../resources/gameoflife.png" />
+   					<span id="my-navbar-text">Cellular Automation Game</span>	 			
+    			</div>
+    		</nav> -->
+				<div class="my-navbar-header"> 
+     				 <img alt="Brand" class="my-navbar-image" src="../resources/gameoflife.png" />
+   					<!-- <span id="my-navbar-text">Cellular Automation Game</span>	  -->			
+    			</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-md-3">
+					<div class="panel panel-default">
+  						<div class="panel-body">
+    						<div class="btn-group my-button-style" role="group">
+    							<input type="button" class="btn btn-primary my-button-style" id="startGameButton" value="Start Game"></input>
+    							<!-- <button type="button" class="btn btn-default my-button-style" disabled=true>Pause</button>
+    							<button type="button" class="btn btn-info my-button-style" id="stepButton" disabled=true>Step</button> -->
+    							<button type="button" class="btn btn-warning my-button-style" id="resetGameButton">Reset</button>
+   								<!-- <button type="button" class="btn btn-default dropdown-toggle my-button-style" data-toggle="dropdown" aria-expanded="false" disabled=true>
+      							Patterns
+    						  	<span class="caret"></span>
+   							 	</button> -->
+    							<ul class="dropdown-menu" role="menu">
+      								<li><a href="#">Acorn</a></li>
+      								<li><a href="#">Gosper Glider Gun</a></li>
+      								<li><a href="#">Still Life</a></li>
+    							</ul>
+    							
+  							</div>
+ 						 </div>
+					</div>
+					<div class="panel panel-default">
+  						<div class="panel-body">
+    						<h3>Game Rules</h1>
+    						 <img alt="Brand" class="my-rules-image" src="../resources/rules.png" />
+ 						 </div>
+					</div>
+
+				</div> 
+ 				<div class="col-md-9">
+ 					<div class="panel panel-default">
+  						<div class="panel-body">
+    						<table id="game-table" class="table table-bordered">
+							</table>							
+
+ 						 </div>
+					</div>
+ 				</div>
+			</div>
+
+		</div>
+    <script type="text/javascript" src="../js/app.js"></script>
+		<script type="text/javascript" src="../js/jquery.js"></script>
+		<script type="text/javascript" src="../js/bootstrap.min.js"></script>	
+	</body>
+</html>
