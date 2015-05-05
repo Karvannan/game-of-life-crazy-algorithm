@@ -3,6 +3,7 @@ var gameStarted = false;
 var gridRows = 75;
 var gridColumns = 75;
 var neighbourCellsMap = {};
+var totalCellsMap = {};
 
 function hasElement(liveCellsMap) {	
 	for (var key in liveCellsMap) {
@@ -42,19 +43,21 @@ function loadTable () {
 
     // game-table - Table click event listener
 	var table = document.getElementById('game-table');	
-	table.addEventListener('click',function tableClick(e) {
-		if (!gameStarted && e.srcElement.id) {
-			document.getElementById(e.srcElement.id).setAttribute("class", "my-live-cell");
-			// Add each live cells into the liveCellsMap
-			//liveCellsMap.push(e.srcElement.id);
-			liveCellsMap[e.srcElement.id] = e.srcElement.id;
-		}
-	});
+	table.addEventListener('click',tableClick);
 
 	// call the function to build the grid
 	var tableData = computeTableStructure(gridRows,gridColumns);
 	setInnerHTML(table,tableData);
 
+}
+
+function drawLiveCell(id) {
+	document.getElementById(id).setAttribute("class", "my-live-cell");
+	liveCellsMap[id] = id;
+}
+
+function tableClick(e) {
+	drawLiveCell(e.srcElement.id);
 }
 
 function computeTableStructure (rows,cols)
@@ -67,26 +70,28 @@ function computeTableStructure (rows,cols)
 		{
 			/*Set the table data id in matrix style.
 			i.e, id = "row#column"*/
-			row+='<td id=\"';
-			if (i < 10) {
-				row+= '0' + i;
-
-			} else {
-				row+= i;
-			}			
-			row+='#';
-			if (j < 10) {
-				row+= '0' + j;
-
-			} else {
-				row+= j;
-			}
-			row+='\"> </td>';
+			var id = computeId(i,j);
+			row+='<td id=\"' + id +'\" ondragstart=\"dragStart(event)\" draggable=\"true\" ondrop=\"drop(event)\" ondragover=\"allowDrop(event)\"> </td>';
+			totalCellsMap[id] = id;
 		}
 		row+='</tr>';
 		innerTableData+=row;
 	}
 	return innerTableData;
+}
+
+function computeId (i,j) {
+			var id= '';
+			if (i < 10)
+				id+= '0' + i;
+			else
+				id+= i;			
+			id+='#';
+			if (j < 10)
+				id+= '0' + j;
+			else
+				id+= j;
+	return id;
 }
 
 function setInnerHTML (element,htmlbody)
@@ -98,8 +103,6 @@ function startGame() {
 	// start the game
 	// build neighbour cells map of every live cell
 	buildNeighboursMap();
-
-	//console.log('Game Started');
 	// debug method just to print the neighbour cells of each array
 	setInterval(function() {processLiveCells();},100);
 	//processLiveCells();
@@ -116,17 +119,6 @@ function buildNeighbours(gridValue) {
 	var previousColumn = column-1>-1 && column-1< gridColumns?column-1:null;
 	var nextColumn = column+1>-1 && column+1< gridColumns?column+1:null;
 
-	// Formatting the row & column index as per the actual grid index
-	row = row<10?'0'+row:row;
-	column = column<10?'0'+column:column;
-
-	previousRow = previousRow != null && previousRow<10?'0'+previousRow:previousRow;
-	nextRow = nextRow != null && nextRow<10?'0'+nextRow:nextRow;	
-	previousColumn = previousColumn != null && previousColumn<10?'0'+previousColumn:previousColumn;
-	nextColumn = nextColumn != null && nextColumn<10?'0'+nextColumn:nextColumn;	
-	
-
-
 	/*Neighbours for a cell [i,j] aregridId
 	Previous row [i-1,j-1] [i-1,j] [i-1,j+1] 
 	Same row [i,j-1] [i,j+1] 
@@ -134,25 +126,25 @@ function buildNeighbours(gridValue) {
 	var neighbours = [];
 	// Previous row
 	if (previousRow != null && previousColumn != null)
-		neighbours.push(previousRow + '#' + previousColumn);
+		neighbours.push(computeId(previousRow,previousColumn));
 	if (previousRow != null && column != null)
-		neighbours.push(previousRow + '#' + column);
+		neighbours.push(computeId(previousRow,column));
 	if (previousRow != null && nextColumn != null)
-		neighbours.push(previousRow + '#' + nextColumn);
+		neighbours.push(computeId(previousRow,nextColumn));
 
 	// Same row
 	if (row != null && previousColumn != null)
-		neighbours.push(row + '#' + previousColumn);
+		neighbours.push(computeId(row,previousColumn));
 	if (row != null && nextColumn != null)
-		neighbours.push(row + '#' + nextColumn);
+		neighbours.push(computeId(row,nextColumn));
 
 	// Next row
 	if (nextRow != null && previousColumn != null)
-		neighbours.push(nextRow + '#' + previousColumn);
+		neighbours.push(computeId(nextRow,previousColumn));
 	if (nextRow != null && column != null)
-		neighbours.push(nextRow + '#' + column);
+		neighbours.push(computeId(nextRow,column));
 	if (nextRow != null && nextColumn != null)
-		neighbours.push(nextRow + '#' + nextColumn);
+		neighbours.push(computeId(nextRow,nextColumn));
 
 	if (neighbours.length > 0)
 		return neighbours;
@@ -172,18 +164,10 @@ function buildNeighboursMap() {
 function processLiveCells() {
 	// debugger;
 	for (var currentCell in neighbourCellsMap) {
-		//console.log('processing ' + currentCell);
 		var neighbourCells = neighbourCellsMap[currentCell];
-		//console.log(neighbourCells);
-		if (isOverPopulated(neighbourCells)) {
-			//console.log('killing overpopulated ' + currentCell);
+		if (!isEligibleToLive(neighbourCells)) {
 			makeCellDead(currentCell);
 		}
-		if (isUnderPopulated(neighbourCells)) {
-			//console.log('killing underpopulated ' + currentCell);
-			makeCellDead(currentCell);
-		}
-		makeCellsAlive(neighbourCells);
 	}
 
 	if (!hasElement(liveCellsMap)) {
@@ -194,40 +178,29 @@ function processLiveCells() {
 function getNeighbourLiveCount(neighbourCells) {
 	var liveCellsCount = 0;
 	for (var i in neighbourCells) {
-		if (checkLiveCellById(neighbourCells[i])) {
+		if (isCellAlive(neighbourCells[i])) {
 			liveCellsCount++;
 		}
 	}
 	return liveCellsCount;
 }
 
-function isOverPopulated(neighbourCells) {
+function isEligibleToLive(neighbourCells) {
 	var liveCellsCount = getNeighbourLiveCount(neighbourCells);
-	if (liveCellsCount > 3) {
+	if (liveCellsCount <= 3 && liveCellsCount >= 2)
 		return true;
-	}
 	return false;
-}
-
-function isUnderPopulated(neighbourCells) {
-	var liveCellsCount = getNeighbourLiveCount(neighbourCells);
-	if (liveCellsCount < 2) {
-		return true;
-	}
-	return false;
-
 }
 
 function makeCellsAlive(neighbourCells) {
 	
 	for (var i in neighbourCells) {
-		if (!checkLiveCellById(neighbourCells[i])) {
-			//console.log('dead cell ' + neighbourCells[i]);
+		if (!isCellAlive(neighbourCells[i])) {
 			var deadCellsNeighbours = buildNeighbours(neighbourCells[i]);
 			if (deadCellsNeighbours != null) {
 				var liveCellsAroundDeadCells = 0;
 				for (var j in deadCellsNeighbours) {
-					if (checkLiveCellById(deadCellsNeighbours[j])) {
+					if (isCellAlive(deadCellsNeighbours[j])) {
 						liveCellsAroundDeadCells ++;
 					}
 				}
@@ -239,9 +212,8 @@ function makeCellsAlive(neighbourCells) {
 	}
 }
 
-function checkLiveCellById(currentCell) {
+function isCellAlive(currentCell) {
 	if(liveCellsMap[currentCell]) {
-		// console.log('live cell found !!' + formattedCellStyle);
 		return true;
 	}
 	return false;
@@ -249,12 +221,10 @@ function checkLiveCellById(currentCell) {
 
 function resetGame() {
 	// Reset the game
-	//console.log('game reset');
 	location.reload();
 }
 
 function makeCellAlive(currentCell,deadCellsNeighbours) {
-	//console.log('trying to make live cell ' + currentCell);
 	try {
 		document.getElementById(currentCell).setAttribute("class", "my-live-cell");
 		liveCellsMap[currentCell] = currentCell;
@@ -263,14 +233,24 @@ function makeCellAlive(currentCell,deadCellsNeighbours) {
 		console.log(e);
 		console.log(currentCell);
 	}
-	
-	//console.log('cell made alive');
 }
 
-function makeCellDead(currentCell) {	
-	//console.log('killing ' + currentCell);
-	//removeDeadCell(currentCell);
+function makeCellDead(currentCell) {
 	delete liveCellsMap[currentCell];
 	delete neighbourCellsMap[currentCell];
 	document.getElementById(currentCell).removeAttribute("class", "my-live-cell");
+}
+
+
+function dragStart(event) {
+    event.dataTransfer.setData("Text", event.target.id);
+}
+
+function allowDrop(event) {
+    event.preventDefault();
+    tableClick(event);
+}
+
+function drop(event) {
+    event.preventDefault();
 }
