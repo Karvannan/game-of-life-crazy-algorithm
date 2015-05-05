@@ -2,8 +2,26 @@ var liveCellsMap = {};
 var gameStarted = false;
 var gridRows = 75;
 var gridColumns = 75;
-var neighbourCellsMap = {};
-var totalCellsMap = {};
+var deadCellsToConsider = {};
+
+
+var startGameButton = document.getElementById('startGameButton');
+var resetGameButton = document.getElementById('resetGameButton');
+var table = document.getElementById('game-table');
+
+
+var rPentominoPattern = document.getElementById('rPentominoPattern');
+var acornPattern = document.getElementById('acornPattern');
+var beaconPattern = document.getElementById('beaconPattern');
+var blinkedPattern = document.getElementById('blinkedPattern');
+var pulsarPattern = document.getElementById('pulsarPattern');
+var toadPattern = document.getElementById('toadPattern');
+var spaceShipPattern = document.getElementById('spaceShipPattern');
+var gliderPattern = document.getElementById('gliderPattern');
+var dieHardPattern = document.getElementById('dieHardPattern');
+var universePattern = document.getElementById('universe');
+
+
 
 function hasElement(liveCellsMap) {	
 	for (var key in liveCellsMap) {
@@ -12,52 +30,37 @@ function hasElement(liveCellsMap) {
 	return false;
 }
 
-function loadTable () {
 
-	// startGameButton - Button click event listener
-    var startGameButton = document.getElementById('startGameButton');
-    startGameButton.addEventListener("click", function(e) {
-      if (!hasElement(liveCellsMap)) {
-      	startGameButton.value = 'Start Game';
-      	alert("Turn cells alive by clicking at them & Start the game !!");
-      	return;
-      }
-
-      startGameButton.value = 'Next Step';
-
-      // if game is already started, then process just the live cells
-      if (gameStarted)
-      	processLiveCells();
-      else {
-      	// if the game is not started, initialize the live cells & its neighbours
-      	startGame();
-      	gameStarted = true;
-      }	  
-    });
-
-    // resetGameButton - Button click event listener
-    var resetGameButton = document.getElementById('resetGameButton');
-    resetGameButton.addEventListener("click",function(e) {
-    	resetGame();
-    }); 
-
-    // game-table - Table click event listener
-	var table = document.getElementById('game-table');	
-	table.addEventListener('click',tableClick);
-
-	// call the function to build the grid
-	var tableData = computeTableStructure(gridRows,gridColumns);
-	setInnerHTML(table,tableData);
-
+function init() {
+	loadTable();
+	registerListeners();
 }
 
-function drawLiveCell(id) {
-	document.getElementById(id).setAttribute("class", "my-live-cell");
-	liveCellsMap[id] = id;
+function registerListeners() {
+    startGameButton.addEventListener("click",initGame);
+    resetGameButton.addEventListener("click",resetGame);
+	table.addEventListener('click',tableClick);
+	gliderPattern.addEventListener('click',initiateGlider);
+	dieHardPattern.addEventListener('click',initiateDieHardPattern);
+	rPentominoPattern.addEventListener('click',initiateRPentominoPattern);
+	acornPattern.addEventListener('click',initiateAcornPattern);	
+	pulsarPattern.addEventListener('click',initiatePulsarPattern);	
+	spaceShipPattern.addEventListener('click',initiateSpaceShipPattern);
+
+
+	beaconPattern.addEventListener('click',initiateBeaconPattern);
+	universePattern.addEventListener('click',initiateUniverse);
+	blinkedPattern.addEventListener('click',initiateBlinkedPattern);
+	toadPattern.addEventListener('click',initiateToadPattern);		
+}
+
+function loadTable () {
+	var tableData = computeTableStructure(gridRows,gridColumns);
+	table.innerHTML = tableData;
 }
 
 function tableClick(e) {
-	drawLiveCell(e.srcElement.id);
+	makeCellAlive(e.srcElement.id);
 }
 
 function computeTableStructure (rows,cols)
@@ -72,7 +75,6 @@ function computeTableStructure (rows,cols)
 			i.e, id = "row#column"*/
 			var id = computeId(i,j);
 			row+='<td id=\"' + id +'\" ondragstart=\"dragStart(event)\" draggable=\"true\" ondrop=\"drop(event)\" ondragover=\"allowDrop(event)\"> </td>';
-			totalCellsMap[id] = id;
 		}
 		row+='</tr>';
 		innerTableData+=row;
@@ -94,18 +96,32 @@ function computeId (i,j) {
 	return id;
 }
 
-function setInnerHTML (element,htmlbody)
-{
-	element.innerHTML = htmlbody;
+function initGame(e) {
+	if (!hasElement(liveCellsMap)) {
+		startGameButton.value = 'Start Game';
+		alert("Turn cells alive by clicking at them & Start the game !!");
+		return;
+	}
+
+	startGameButton.value = 'Next Step';
+
+	// if game is already started, then process just the live cells
+	if (gameStarted)
+		processLiveCells();
+	else {
+		// if the game is not started, initialize the live cells & its neighbours
+		startGame();
+		gameStarted = true;
+	}
 }
 
 function startGame() {
 	// start the game
 	// build neighbour cells map of every live cell
-	buildNeighboursMap();
+	// buildNeighboursMap();
 	// debug method just to print the neighbour cells of each array
 	setInterval(function() {processLiveCells();},100);
-	//processLiveCells();
+	// processLiveCells();
 }
 
 function buildNeighbours(gridValue) {
@@ -152,26 +168,39 @@ function buildNeighbours(gridValue) {
 	return null;
 }
 
-function buildNeighboursMap() {
-	for (var gridId in liveCellsMap) {
-		var gridValue = liveCellsMap[gridId];
-		var neighbours = buildNeighbours(gridValue);
-		if (neighbours != null)
-			neighbourCellsMap[gridValue] = neighbours;
-	}
-}
-
 function processLiveCells() {
-	// debugger;
-	for (var currentCell in neighbourCellsMap) {
-		var neighbourCells = neighbourCellsMap[currentCell];
+
+	var cellsToBeMadeDead = {};
+
+
+	for (var currentCell in liveCellsMap) {
+		var neighbourCells = buildNeighbours(currentCell);
 		if (!isEligibleToLive(neighbourCells)) {
-			makeCellDead(currentCell);
+			//makeCellDead(currentCell);
+			cellsToBeMadeDead[currentCell] = currentCell;
 		}
 	}
 
-	if (!hasElement(liveCellsMap)) {
-		location.reload();
+	var cellsToBeMadeAlive = {};
+
+
+	for (var currentCell in deadCellsToConsider) {
+		if (!isCellAlive(currentCell)) {
+			var deadCellsNeighbours = buildNeighbours(currentCell);
+			if (getNeighbourLiveCount(deadCellsNeighbours) == 3) {
+				//makeCellAlive(currentCell);
+				cellsToBeMadeAlive[currentCell] = currentCell;
+			}
+		}
+	}
+
+
+	for (var key in cellsToBeMadeDead) {
+		makeCellDead(key);
+	}
+
+	for (var key in cellsToBeMadeAlive) {
+		makeCellAlive(key);
 	}
 }
 
@@ -180,6 +209,8 @@ function getNeighbourLiveCount(neighbourCells) {
 	for (var i in neighbourCells) {
 		if (isCellAlive(neighbourCells[i])) {
 			liveCellsCount++;
+		} else {
+			deadCellsToConsider[neighbourCells[i]] = neighbourCells[i];
 		}
 	}
 	return liveCellsCount;
@@ -190,26 +221,6 @@ function isEligibleToLive(neighbourCells) {
 	if (liveCellsCount <= 3 && liveCellsCount >= 2)
 		return true;
 	return false;
-}
-
-function makeCellsAlive(neighbourCells) {
-	
-	for (var i in neighbourCells) {
-		if (!isCellAlive(neighbourCells[i])) {
-			var deadCellsNeighbours = buildNeighbours(neighbourCells[i]);
-			if (deadCellsNeighbours != null) {
-				var liveCellsAroundDeadCells = 0;
-				for (var j in deadCellsNeighbours) {
-					if (isCellAlive(deadCellsNeighbours[j])) {
-						liveCellsAroundDeadCells ++;
-					}
-				}
-				if (liveCellsAroundDeadCells ==3) {
-					makeCellAlive(neighbourCells[i],deadCellsNeighbours);
-				}
-			}
-		}
-	}
 }
 
 function isCellAlive(currentCell) {
@@ -224,11 +235,10 @@ function resetGame() {
 	location.reload();
 }
 
-function makeCellAlive(currentCell,deadCellsNeighbours) {
+function makeCellAlive(currentCell) {
 	try {
 		document.getElementById(currentCell).setAttribute("class", "my-live-cell");
 		liveCellsMap[currentCell] = currentCell;
-		neighbourCellsMap[currentCell] = deadCellsNeighbours;
 	} catch(e) {
 		console.log(e);
 		console.log(currentCell);
@@ -237,7 +247,6 @@ function makeCellAlive(currentCell,deadCellsNeighbours) {
 
 function makeCellDead(currentCell) {
 	delete liveCellsMap[currentCell];
-	delete neighbourCellsMap[currentCell];
 	document.getElementById(currentCell).removeAttribute("class", "my-live-cell");
 }
 
@@ -253,4 +262,210 @@ function allowDrop(event) {
 
 function drop(event) {
     event.preventDefault();
+}
+
+
+
+function initiateUniverse () {	
+	clearExistingPattern();
+	makeCellAlive('02#08');
+	makeCellAlive('03#06');
+	makeCellAlive('03#08');
+	makeCellAlive('03#09');
+	makeCellAlive('04#06');
+	makeCellAlive('04#08');
+	makeCellAlive('05#06');
+	makeCellAlive('06#04');
+	makeCellAlive('07#02');
+	makeCellAlive('07#04');
+}
+
+
+function initiateDieHardPattern() {	
+	clearExistingPattern();
+	makeCellAlive('17#35');
+	makeCellAlive('18#29');
+	makeCellAlive('18#30');
+	makeCellAlive('19#30');
+	makeCellAlive('19#34');
+	makeCellAlive('19#35');
+	makeCellAlive('19#36');
+
+}
+
+function initiateRPentominoPattern() {	
+	clearExistingPattern();
+	makeCellAlive('55#44');
+	makeCellAlive('55#45');
+	makeCellAlive('56#43');
+	makeCellAlive('56#44');
+	makeCellAlive('57#44');
+}
+
+function initiateAcornPattern() {	
+	clearExistingPattern();
+	makeCellAlive('14#32');
+	makeCellAlive('15#34');
+	makeCellAlive('16#31');
+	makeCellAlive('16#32');
+	makeCellAlive('16#35');
+	makeCellAlive('16#36');
+	makeCellAlive('16#37');
+}
+
+function initiateBeaconPattern() {	
+	clearExistingPattern();
+	makeCellAlive('32#40');
+	makeCellAlive('32#41');
+	makeCellAlive('33#40');
+	makeCellAlive('33#41');
+	makeCellAlive('34#42');
+	makeCellAlive('34#43');
+	makeCellAlive('35#42');
+	makeCellAlive('35#43');
+}
+
+function initiateBlinkedPattern() {	
+	clearExistingPattern();
+	makeCellAlive('09#29');
+	makeCellAlive('10#29');
+	makeCellAlive('11#29');
+}
+
+function initiatePulsarPattern() {	
+	clearExistingPattern();
+	makeCellAlive('13#32');
+	makeCellAlive('13#33');
+	makeCellAlive('13#34');
+	makeCellAlive('13#38');
+	makeCellAlive('13#39');
+	makeCellAlive('13#40');
+	makeCellAlive('15#30');
+	makeCellAlive('15#35');
+	makeCellAlive('15#37');
+	makeCellAlive('15#42');
+	makeCellAlive('16#30');
+	makeCellAlive('16#35');
+	makeCellAlive('16#37');
+	makeCellAlive('16#42');
+	makeCellAlive('17#30');
+	makeCellAlive('17#35');
+	makeCellAlive('17#37');
+	makeCellAlive('17#42');
+	makeCellAlive('18#32');
+	makeCellAlive('18#33');
+	makeCellAlive('18#34');
+	makeCellAlive('18#38');
+	makeCellAlive('18#39');
+	makeCellAlive('18#40');
+	makeCellAlive('20#32');
+	makeCellAlive('20#33');
+	makeCellAlive('20#34');
+	makeCellAlive('20#38');
+	makeCellAlive('20#39');
+	makeCellAlive('20#40');
+	makeCellAlive('21#30');
+	makeCellAlive('21#35');
+	makeCellAlive('21#37');
+	makeCellAlive('21#42');
+	makeCellAlive('22#30');
+	makeCellAlive('22#35');
+	makeCellAlive('22#37');
+	makeCellAlive('22#42');
+	makeCellAlive('23#30');
+	makeCellAlive('23#35');
+	makeCellAlive('23#37');
+	makeCellAlive('23#42');
+	makeCellAlive('25#32');
+	makeCellAlive('25#33');
+	makeCellAlive('25#34');
+	makeCellAlive('25#38');
+	makeCellAlive('25#39');
+	makeCellAlive('25#40');
+}
+
+function initiateToadPattern() {	
+	clearExistingPattern();
+	makeCellAlive('29#33');
+	makeCellAlive('29#34');
+	makeCellAlive('29#35');
+	makeCellAlive('30#32');
+	makeCellAlive('30#33');
+	makeCellAlive('30#34');
+}
+
+function initiateGliderPattern() {	
+	clearExistingPattern();
+	makeCellAlive('22#33');
+	makeCellAlive('22#35');
+	makeCellAlive('23#34');
+	makeCellAlive('23#35');
+	makeCellAlive('24#34');
+}
+
+function initiateSpaceShipPattern() {	
+	clearExistingPattern();
+	makeCellAlive('50#34');
+	makeCellAlive('50#35');
+	makeCellAlive('51#32');
+	makeCellAlive('51#33');
+	makeCellAlive('51#35');
+	makeCellAlive('51#36');
+	makeCellAlive('52#32');
+	makeCellAlive('52#33');
+	makeCellAlive('52#34');
+	makeCellAlive('52#35');
+	makeCellAlive('53#33');
+	makeCellAlive('53#34');	
+}
+
+function initiateGlider () {
+	clearExistingPattern();
+	makeCellAlive('12#36');
+	makeCellAlive('13#34');
+	makeCellAlive('13#36');
+	makeCellAlive('14#32');
+	makeCellAlive('14#33');
+	makeCellAlive('14#46');
+	makeCellAlive('14#47');
+	makeCellAlive('14#24');
+	makeCellAlive('14#25');
+	makeCellAlive('15#32');
+	makeCellAlive('15#33');
+	makeCellAlive('15#27');
+	makeCellAlive('15#46');
+	makeCellAlive('15#47');
+	makeCellAlive('15#23');
+	makeCellAlive('16#33');
+	makeCellAlive('16#32');
+	makeCellAlive('16#28');
+	makeCellAlive('16#12');
+	makeCellAlive('16#13');
+	makeCellAlive('16#22');
+	makeCellAlive('17#34');
+	makeCellAlive('17#36');
+	makeCellAlive('17#26');
+	makeCellAlive('17#28');
+	makeCellAlive('17#29');
+	makeCellAlive('17#12');
+	makeCellAlive('17#22');
+	makeCellAlive('17#13');
+	makeCellAlive('18#22');
+	makeCellAlive('18#28');
+	makeCellAlive('18#36');
+	makeCellAlive('19#27');
+	makeCellAlive('19#23');
+	makeCellAlive('20#24');
+	makeCellAlive('20#25');
+
+}
+
+
+function clearExistingPattern() {
+	liveCellsMap = {};
+
+	var table = document.getElementById('game-table');
+	table.innerHTML = '';	
+
+	loadTable();	
 }

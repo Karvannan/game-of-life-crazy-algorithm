@@ -8,7 +8,7 @@
 	<body class="my-body" id="gameBody">
     <script>
       document.addEventListener("DOMContentLoaded", function(e) {
-        loadTable();
+        init();
       });
 
     </script>
@@ -30,19 +30,24 @@
   						<div class="panel-body">
     						<div class="btn-group my-button-style" role="group">
     							<input type="button" class="btn btn-primary my-button-style" id="startGameButton" value="Start Game"></input>
-    							<!-- <button type="button" class="btn btn-default my-button-style" disabled=true>Pause</button>
-    							<button type="button" class="btn btn-info my-button-style" id="stepButton" disabled=true>Step</button> -->
     							<button type="button" class="btn btn-warning my-button-style" id="resetGameButton">Reset</button>
-   								<!-- <button type="button" class="btn btn-default dropdown-toggle my-button-style" data-toggle="dropdown" aria-expanded="false" disabled=true>
-      							Patterns
-    						  	<span class="caret"></span>
-   							 	</button> -->
-    							<ul class="dropdown-menu" role="menu">
-      								<li><a href="#">Acorn</a></li>
-      								<li><a href="#">Gosper Glider Gun</a></li>
-      								<li><a href="#">Still Life</a></li>
-    							</ul>
-    							
+                  <button type="button" class="btn btn-default dropdown-toggle my-button-style" data-toggle="dropdown" aria-expanded="false">
+                    Patterns
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu">
+                      <li><a id = "universe" href="#">Universe</a></li>
+                      <li><a id="rPentominoPattern" href="#">Pentomino</a></li>
+                      <li><a id= "gliderPattern" href="#">Gosper Glider Gun</a></li>
+                      <li><a id="dieHardPattern" href="#">Die Hard</a></li>                     
+                      <li><a id= "acornPattern" href="#">Acorn</a></li>
+                      <li><a id= "beaconPattern" href="#">Beacon</a></li>
+                      <li><a id= "blinkedPattern" href="#">Blinked</a></li>
+                      <li><a id= "pulsarPattern" href="#">Pulsar</a></li>
+                      <li><a id= "toadPattern" href="#">Toad</a></li>
+                      <li><a id= "spaceShipPattern" href="#">Space Ship</a></li>
+                      
+                  </ul>
   							</div>
  						 </div>
 					</div>
