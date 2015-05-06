@@ -130,10 +130,10 @@ function buildNeighbours(gridValue) {
 	var column = parseInt(gridIndex[1]);
 
 	// Additional check to exclude the neighbour cells outside the boundary
-	var previousRow = row-1>-1 && row-1< gridRows?row-1:null;
-	var nextRow = row+1>-1 && row+1< gridRows?row+1:null;
-	var previousColumn = column-1>-1 && column-1< gridColumns?column-1:null;
-	var nextColumn = column+1>-1 && column+1< gridColumns?column+1:null;
+	var previousRow = row-1>-1 && row-1< gridRows?row-1:gridRows-1;
+	var nextRow = row+1>-1 && row+1< gridRows?row+1:0;
+	var previousColumn = column-1>-1 && column-1< gridColumns?column-1:gridColumns-1;
+	var nextColumn = column+1>-1 && column+1< gridColumns?column+1:0;
 
 	/*Neighbours for a cell [i,j] aregridId
 	Previous row [i-1,j-1] [i-1,j] [i-1,j+1] 
